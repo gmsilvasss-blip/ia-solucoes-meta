@@ -13,7 +13,7 @@
 </head>
 <body>
 
-    <div class="card">
+    <div id="fb-root"></div> <div class="card">
         <h1>IA Soluções</h1>
         <p>Clique abaixo para conectar seu WhatsApp Business à nossa IA.</p>
         
@@ -23,17 +23,18 @@
     </div>
 
     <script>
-        // Inicializa o SDK da Meta
+        // Esta função é chamada automaticamente pelo SDK assim que ele carrega
         window.fbAsyncInit = function() {
             FB.init({
-                appId      : '{{ app_id }}', // O Python vai colocar seu ID aqui
+                appId      : '{{ app_id }}', 
                 cookie     : true,
                 xfbml      : true,
                 version    : 'v18.0'
             });
+            console.log("SDK inicializado com o ID: {{ app_id }}");
         };
 
-        // Carrega o script da Meta
+        // Carrega o SDK de forma assíncrona
         (function(d, s, id){
             var js, fjs = d.getElementsByTagName(s)[0];
             if (d.getElementById(id)) {return;}
@@ -42,16 +43,23 @@
             fjs.parentNode.insertBefore(js, fjs);
         }(document, 'script', 'facebook-jssdk'));
 
-        // Função que abre o EMBEDDED SIGNUP real
+        // Função de login disparada pelo clique
         function launchWhatsAppSignup() {
+            // Verifica se o FB existe antes de tentar o login
+            if (typeof FB === 'undefined') {
+                alert("O sistema da Meta ainda está carregando. Por favor, aguarde 3 segundos.");
+                return;
+            }
+
             FB.login(function(response) {
                 if (response.authResponse) {
-                    alert("Conectado com sucesso! Agora você pode prosseguir com a gravação.");
+                    console.log("Sucesso no login:", response);
+                    alert("Conectado com sucesso!");
                 } else {
-                    alert("A conexão foi cancelada ou não autorizada.");
+                    console.log("Login cancelado.");
+                    alert("A conexão não foi concluída.");
                 }
             }, {
-                // Permissões que você pediu na análise
                 scope: 'whatsapp_business_management,whatsapp_business_messaging,business_management',
                 extras: {
                     feature: 'whatsapp_embedded_signup'

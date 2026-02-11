@@ -15,7 +15,7 @@
     <div id="fb-root"></div>
     <div class="card">
         <h1>IA Soluções</h1>
-        <p>Conecte seu WhatsApp Business para gravar a análise.</p>
+        <p>Conecte sua conta comercial para ativar a IA.</p>
         <button onclick="launchWhatsAppSignup()" class="btn-meta">Conectar com Facebook</button>
     </div>
 
@@ -27,7 +27,7 @@
                 xfbml      : true,
                 version    : 'v18.0'
             });
-            console.log("SDK inicializado. Business ID vinculado.");
+            console.log("SDK inicializado com sucesso.");
         };
 
         (function(d, s, id){
@@ -39,21 +39,18 @@
         }(document, 'script', 'facebook-jssdk'));
 
         function launchWhatsAppSignup() {
+            // Removi o "feature: embedded_signup" que estava causando o erro de BSP
             FB.login(function(response) {
                 if (response.authResponse) {
-                    alert("Conexão detectada! Verifique o console.");
-                    console.log(response);
+                    alert("Conexão realizada com sucesso! Você já pode gravar o vídeo.");
+                    console.log("Token de Acesso:", response.authResponse.accessToken);
+                } else {
+                    alert("A conexão foi cancelada.");
                 }
             }, {
+                // Estas são as permissões exatas que você enviou para análise
                 scope: 'whatsapp_business_management,whatsapp_business_messaging,business_management',
-                extras: {
-                    feature: 'whatsapp_embedded_signup',
-                    setup: {
-                        business: {
-                            id: '{{ business_id }}' // O ID que você achou entra aqui
-                        }
-                    }
-                }
+                return_scopes: true
             });
         }
     </script>

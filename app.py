@@ -6,8 +6,8 @@ from dotenv import load_dotenv
 # O Render também permite configurar estas variáveis diretamente no painel deles
 load_dotenv('env.env')
 
-# 'template_folder="."' diz ao Flask para procurar o index.html na mesma pasta do app.py
-app = Flask(__name__)
+# O '.' diz ao Flask para procurar o index.html na mesma pasta do app.py
+app = Flask(__name__, template_folder='.')
 
 # Puxando as variáveis do seu arquivo .env
 VERIFY_TOKEN = os.getenv('Verify_Token_Webhook')

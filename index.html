@@ -12,29 +12,24 @@
     </style>
 </head>
 <body>
-
-    <div id="fb-root"></div> <div class="card">
+    <div id="fb-root"></div>
+    <div class="card">
         <h1>IA Soluções</h1>
-        <p>Clique abaixo para conectar seu WhatsApp Business à nossa IA.</p>
-        
-        <button onclick="launchWhatsAppSignup()" class="btn-meta">
-            Conectar com Facebook
-        </button>
+        <p>Conecte seu WhatsApp Business para gravar a análise.</p>
+        <button onclick="launchWhatsAppSignup()" class="btn-meta">Conectar com Facebook</button>
     </div>
 
     <script>
-        // Esta função é chamada automaticamente pelo SDK assim que ele carrega
         window.fbAsyncInit = function() {
             FB.init({
-                appId      : '{{ app_id }}', 
+                appId      : '{{ app_id }}',
                 cookie     : true,
                 xfbml      : true,
                 version    : 'v18.0'
             });
-            console.log("SDK inicializado com o ID: {{ app_id }}");
+            console.log("SDK inicializado. Business ID vinculado.");
         };
 
-        // Carrega o SDK de forma assíncrona
         (function(d, s, id){
             var js, fjs = d.getElementsByTagName(s)[0];
             if (d.getElementById(id)) {return;}
@@ -43,26 +38,21 @@
             fjs.parentNode.insertBefore(js, fjs);
         }(document, 'script', 'facebook-jssdk'));
 
-        // Função de login disparada pelo clique
         function launchWhatsAppSignup() {
-            // Verifica se o FB existe antes de tentar o login
-            if (typeof FB === 'undefined') {
-                alert("O sistema da Meta ainda está carregando. Por favor, aguarde 3 segundos.");
-                return;
-            }
-
             FB.login(function(response) {
                 if (response.authResponse) {
-                    console.log("Sucesso no login:", response);
-                    alert("Conectado com sucesso!");
-                } else {
-                    console.log("Login cancelado.");
-                    alert("A conexão não foi concluída.");
+                    alert("Conexão detectada! Verifique o console.");
+                    console.log(response);
                 }
             }, {
                 scope: 'whatsapp_business_management,whatsapp_business_messaging,business_management',
                 extras: {
-                    feature: 'whatsapp_embedded_signup'
+                    feature: 'whatsapp_embedded_signup',
+                    setup: {
+                        business: {
+                            id: '{{ business_id }}' // O ID que você achou entra aqui
+                        }
+                    }
                 }
             });
         }

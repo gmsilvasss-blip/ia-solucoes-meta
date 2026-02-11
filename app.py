@@ -8,6 +8,7 @@ load_dotenv('env.env')
 app = Flask(__name__, template_folder='.')
 
 APP_ID = os.getenv('App_Id')
+BUSINESS_ID = os.getenv('Business_Id') or os.getenv('BUSINESS_ID')
 VERIFY_TOKEN = os.getenv('Verify_Token_Webhook')
 
 @app.route('/')

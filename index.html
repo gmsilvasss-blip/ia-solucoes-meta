@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IA Soluções - Conexão WhatsApp</title>
+    <style>
+        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background-color: #f0f2f5; }
+        .card { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; }
+        .btn-meta { background-color: #1877f2; color: white; padding: 12px 24px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 16px; text-decoration: none; display: inline-block; }
+        .btn-meta:hover { background-color: #166fe5; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h1>IA Soluções</h1>
+        <p>Clique abaixo para conectar seu WhatsApp Business à nossa IA.</p>
+        
+        <button onclick="launchWhatsAppSignup()" class="btn-meta">
+            Conectar com Facebook
+        </button>
+    </div>
+
+    <script>
+        // Inicializa o SDK da Meta
+        window.fbAsyncInit = function() {
+            FB.init({
+                appId      : '{{ app_id }}', // O Python vai colocar seu ID aqui
+                cookie     : true,
+                xfbml      : true,
+                version    : 'v18.0'
+            });
+        };
+
+        // Carrega o script da Meta
+        (function(d, s, id){
+            var js, fjs = d.getElementsByTagName(s)[0];
+            if (d.getElementById(id)) {return;}
+            js = d.createElement(s); js.id = id;
+            js.src = "https://connect.facebook.net/pt_BR/sdk.js";
+            fjs.parentNode.insertBefore(js, fjs);
+        }(document, 'script', 'facebook-jssdk'));
+
+        // Função que abre o EMBEDDED SIGNUP real
+        function launchWhatsAppSignup() {
+            FB.login(function(response) {
+                if (response.authResponse) {
+                    alert("Conectado com sucesso! Agora você pode prosseguir com a gravação.");
+                } else {
+                    alert("A conexão foi cancelada ou não autorizada.");
+                }
+            }, {
+                // Permissões que você pediu na análise
+                scope: 'whatsapp_business_management,whatsapp_business_messaging,business_management',
+                extras: {
+                    feature: 'whatsapp_embedded_signup'
+                }
+            });
+        }
+    </script>
+</body>
+</html>

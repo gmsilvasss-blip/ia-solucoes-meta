@@ -16,6 +16,10 @@ def home():
     # Passa o APP_ID para o HTML poder carregar o botão da Meta
     return render_template('index.html', app_id=APP_ID)
 
+@app.route('/exclusao')
+def exclusao():
+    return render_template('exclusao.html')
+
 @app.route('/webhook', methods=['GET'])
 def verify():
     mode = request.args.get('hub.mode')

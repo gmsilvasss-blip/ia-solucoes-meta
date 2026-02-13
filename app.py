@@ -1,7 +1,7 @@
 import os
 from flask import Flask, request, jsonify, render_template
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='.')
 
 # Puxando as chaves com um "fallback" para não dar erro 500
 # Ele tenta pegar do Render, se não tiver, usa o que está entre aspas
@@ -37,4 +37,5 @@ def webhook():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
+
 

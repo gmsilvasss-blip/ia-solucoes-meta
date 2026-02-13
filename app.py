@@ -5,8 +5,8 @@ app = Flask(__name__)
 
 # Puxando as chaves com um "fallback" para não dar erro 500
 # Ele tenta pegar do Render, se não tiver, usa o que está entre aspas
-APP_ID = os.environ.get('App_Id', '1167445461916695')
-VERIFY_TOKEN = os.environ.get('Verify_Token_Webhook', 'meu_token_secreto_do_oraculo')
+APP_ID = os.environ.get('App_Id')
+VERIFY_TOKEN = os.environ.get('Verify_Token_Webhook')
 
 @app.route('/')
 def home():
@@ -37,3 +37,4 @@ def webhook():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
+

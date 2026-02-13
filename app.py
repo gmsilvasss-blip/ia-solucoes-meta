@@ -1,22 +1,20 @@
 import os
 from flask import Flask, request, jsonify, render_template
 
+# Configuramos o template_folder como '.' para indicar que os HTMLs estão na raiz
 app = Flask(__name__, template_folder='.')
 
-# Puxando as chaves com um "fallback" para não dar erro 500
-# Ele tenta pegar do Render, se não tiver, usa o que está entre aspas
-APP_ID = os.environ.get('App_Id')
-VERIFY_TOKEN = os.environ.get('Verify_Token_Webhook')
+APP_ID = os.environ.get('App_Id', '1167445461916695')
+VERIFY_TOKEN = os.environ.get('Verify_Token_Webhook', 'webhookkey')
 
 @app.route('/')
 def home():
-    try:
-        return render_template('index.html', app_id=APP_ID)
-    except Exception as e:
-        return f"Erro ao carregar template: {str(e)}", 500
+    # Agora ele vai procurar o index.html na mesma pasta do app.py
+    return render_template('index.html', app_id=APP_ID)
 
 @app.route('/exclusao')
 def exclusao():
+    # O mesmo para o exclusao.html
     return render_template('exclusao.html')
 
 @app.route('/webhook', methods=['GET', 'POST'])
@@ -28,14 +26,13 @@ def webhook():
 
         if mode == 'subscribe' and token == VERIFY_TOKEN:
             return challenge, 200
-        return "Token Inválido", 403
+        return "Token de verificação inválido", 403
                 
     elif request.method == 'POST':
-        # Retornamos 200 rápido para a Meta não achar que estamos fora do ar
+        data = request.json
+        print("Webhook recebido:", data)
         return jsonify({"status": "ok"}), 200
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
-
-

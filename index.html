@@ -3,23 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IA Soluções - Conexão WhatsApp</title>
+    <title>IA Soluções - Oráculo</title>
     <style>
-        body { font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; background-color: #f0f2f5; }
-        .card { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; }
-        .btn-meta { background-color: #1877f2; color: white; padding: 12px 24px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 16px; text-decoration: none; display: inline-block; }
-        .btn-meta:hover { background-color: #166fe5; }
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f2f5;
+        }
+        .container {
+            text-align: center;
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        button {
+            background-color: #1877f2;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #166fe5;
+        }
     </style>
 </head>
 <body>
-    <div id="fb-root"></div>
-    <div class="card">
-        <h1>IA Soluções</h1>
-        <p>Conecte sua conta comercial para ativar a IA.</p>
-        <button onclick="launchWhatsAppSignup()" class="btn-meta">Conectar com Facebook</button>
+
+    <div class="container">
+        <h1>Conectar ao Oráculo</h1>
+        <p>Clique abaixo para integrar seu WhatsApp via Meta.</p>
+        <button onclick="launchWhatsAppSignup()">Conectar com Facebook</button>
     </div>
 
+    <div id="fb-root"></div>
+    <script async defer crossorigin="anonymous" src="https://connect.facebook.net/pt_BR/sdk.js"></script>
+
     <script>
+        // Inicialização do SDK
         window.fbAsyncInit = function() {
             FB.init({
                 appId      : '{{ app_id }}',
@@ -27,33 +56,27 @@
                 xfbml      : true,
                 version    : 'v18.0'
             });
-            console.log("SDK inicializado com sucesso.");
+            console.log("SDK do Facebook inicializado com App ID: {{ app_id }}");
         };
 
-        (function(d, s, id){
-            var js, fjs = d.getElementsByTagName(s)[0];
-            if (d.getElementById(id)) {return;}
-            js = d.createElement(s); js.id = id;
-            js.src = "https://connect.facebook.net/pt_BR/sdk.js";
-            fjs.parentNode.insertBefore(js, fjs);
-        }(document, 'script', 'facebook-jssdk'));
-
+        // Função de Login simplificada para evitar erros de sintaxe
         function launchWhatsAppSignup() {
-            // Removi o "feature: embedded_signup" que estava causando o erro de BSP
+            console.log("Iniciando fluxo de login...");
+            
             FB.login(function(response) {
                 if (response.authResponse) {
+                    console.log('Autenticado com sucesso!', response);
                     alert("Conexão realizada com sucesso! Você já pode gravar o vídeo.");
-                    console.log("Token de Acesso:", response.authResponse.accessToken);
                 } else {
-                    alert("A conexão foi cancelada.");
+                    console.log('O usuário cancelou o login.');
+                    alert("A conexão não foi concluída.");
                 }
             }, {
-                // Estas são as permissões exatas que você enviou para análise
-                scope: 'whatsapp_business_management,whatsapp_business_messaging,
+                // Escopos necessários para o WhatsApp sem exigir verificação empresarial imediata
+                scope: 'whatsapp_business_management,whatsapp_business_messaging',
                 return_scopes: true
             });
         }
     </script>
 </body>
-
 </html>

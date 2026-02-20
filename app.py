@@ -16,7 +16,12 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__, template_folder='.')
 
 # --- VARIÁVEIS DE AMBIENTE ---
-pljx vncx ezdg sehk
+APP_ID = os.environ.get('App_Id')
+WA_TOKEN = os.environ.get('WHATSAPP_TOKEN')
+PHONE_ID = os.environ.get('PHONE_NUMBER_ID')
+VERIFY_TOKEN = os.environ.get('Verify_Token_Webhook', 'webhookkey')
+MEU_NUMERO = os.environ.get('Meu_Numero_Whatsapp') # Adicione seu número no Render (ex: 5511999999999)
+
 
 @app.route('/')
 def home():
@@ -93,4 +98,5 @@ scheduler.start()
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
+
 

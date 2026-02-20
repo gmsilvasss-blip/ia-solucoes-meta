@@ -17,8 +17,6 @@ def executar_varredura_vagas():
         mail.select("inbox")
 
         remetente_indeed = "donotreply@match.indeed.com"
-        
-        # Lista de cidades que você quer IGNORAR (Lista Negra)
         cidades_excluir = [
             "Cajamar", "Jarinu", "Jundiaí", "Várzea Paulista", "Barueri", 
             "Osasco", "Guarulhos", "Campinas", "Santana de Parnaíba", "Itapevi"
@@ -30,7 +28,9 @@ def executar_varredura_vagas():
         status, mensagens = mail.search(None, f'(FROM "{remetente_indeed}")')
         ids = mensagens[0].split()
 
-        if not ids: return []
+        if not ids:
+            print("DEBUG: Nenhum e-mail do Indeed encontrado.")
+            return []
 
         # Analisamos o e-mail mais recente
         _, data = mail.fetch(ids[-1], "(RFC822)")
@@ -46,6 +46,8 @@ def executar_varredura_vagas():
 
         soup = BeautifulSoup(corpo_html, "html.parser")
         
+        print("--- INICIANDO DIAGNÓSTICO DE LOCALIDADES ---")
+        
         for link in soup.find_all('a', href=True):
             url = link['href']
             
@@ -53,41 +55,41 @@ def executar_varredura_vagas():
                 container = link.find_parent()
                 texto_bloco = container.get_text(separator=' ') if container else ""
                 
-                # 1. Validação de Salário
+                # Tenta extrair o local para o log, mesmo antes do filtro
+                local_bruto = "Indefinido"
+                partes = [p.strip() for p in texto_bloco.split(' - ') if "SP" in p or "São Paulo" in p]
+                if partes:
+                    local_bruto = partes[0]
+                
+                # LOG DE DEPURAÇÃO: Mostra tudo o que o bot está a ler
+                print(f"DEBUG: Vaga encontrada em: [{local_bruto}]")
+
                 match_salario = re.search(padrao_salario, texto_bloco)
                 
                 if match_salario:
-                    # 2. Extração da Localização Real
-                    local_encontrado = "São Paulo, SP" # Valor padrão
-                    
-                    # O Indeed geralmente separa Local por " - " ou coloca após o nome da empresa
-                    # Vamos buscar a parte que contém "SP" ou "São Paulo"
-                    partes = [p.strip() for p in texto_bloco.split(' - ') if "SP" in p or "São Paulo" in p]
-                    if partes:
-                        local_encontrado = partes[0]
-
-                    # 3. Filtro de Capital vs Interior
-                    # Só aceitamos se contiver "São Paulo" e NÃO contiver cidades da lista negra
-                    eh_interior = any(cid.lower() in local_encontrado.lower() for cid in cidades_excluir)
-                    eh_capital = "são paulo" in local_encontrado.lower() or "sp" in local_encontrado.lower()
+                    eh_interior = any(cid.lower() in local_bruto.lower() for cid in cidades_excluir)
+                    eh_capital = "são paulo" in local_bruto.lower() or "sp" in local_bruto.lower()
 
                     if eh_capital and not eh_interior:
-                        titulo = link.get_text().strip()
-                        if len(titulo) < 3: titulo = "Vaga Identificada"
-
+                        titulo = link.get_text().strip() or "Vaga Identificada"
+                        
                         vaga_msg = (
                             f"📋 *Cargo:* {titulo[:60]}\n"
                             f"💰 *Salário:* {match_salario.group()}\n"
-                            f"📍 *Local:* {local_encontrado}\n"
+                            f"📍 *Local:* {local_bruto}\n"
                             f"🏢 *Plataforma:* Indeed\n"
                             f"🔗 *Link:* {url}"
                         )
                         
                         if vaga_msg not in vagas_encontradas:
                             vagas_encontradas.append(vaga_msg)
+                    else:
+                        print(f"DEBUG: Vaga em {local_bruto} DESCARTADA (Filtro Capital/Interior).")
 
         mail.logout()
-        return vagas_encontradas[:8] # Aumentei para 8 vagas já que o raio é maior
+        print(f"--- FIM DO DIAGNÓSTICO: {len(vagas_encontradas)} vagas aprovadas ---")
+        return vagas_encontradas[:8]
 
     except Exception as e:
+        print(f"DEBUG ERRO: {str(e)}")
         return [f"Erro na varredura: {str(e)}"]

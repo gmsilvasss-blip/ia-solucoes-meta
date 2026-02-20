@@ -16,11 +16,7 @@ logger = logging.getLogger(__name__)
 app = Flask(__name__, template_folder='.')
 
 # --- VARIÁVEIS DE AMBIENTE ---
-APP_ID = os.environ.get('App_Id')
-WA_TOKEN = os.environ.get('WHATSAPP_TOKEN')
-PHONE_ID = os.environ.get('PHONE_NUMBER_ID')
-VERIFY_TOKEN = os.environ.get('Verify_Token_Webhook', 'webhookkey')
-MEU_NUMERO = os.environ.get('MEU_NUMERO_WHATSAPP') # Adicione seu número no Render (ex: 5511999999999)
+pljx vncx ezdg sehk
 
 @app.route('/')
 def home():
@@ -91,9 +87,10 @@ def tarefa_diaria_vagas():
 scheduler = BackgroundScheduler()
 # Configurado para rodar todo dia às 09:00 (Horário do servidor)
 # Você pode ajustar para 'interval' e minutes=60 se preferir testar rápido
-scheduler.add_job(tarefa_diaria_vagas, 'cron', hour=9, minute=0)
+scheduler.add_job(tarefa_diaria_vagas, 'cron', hour=12, minute=0)
 scheduler.start()
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
+

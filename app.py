@@ -107,10 +107,12 @@ def tarefa_diaria_vagas():
 # Agendador (Roda em paralelo ao Flask)
 scheduler = BackgroundScheduler()
 # Configurado para 12:00 UTC (Aproximadamente 09:00 Horário de Brasília/Jundiaí)
-scheduler.add_job(tarefa_diaria_vagas, 'cron', hour=12, minute=0)
+#scheduler.add_job(tarefa_diaria_vagas, 'cron', hour=12, minute=0)
+scheduler.add_job(tarefa_diaria_vagas, 'date')
 scheduler.start()
 
 if __name__ == "__main__":
     # O Render define a porta automaticamente
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
+

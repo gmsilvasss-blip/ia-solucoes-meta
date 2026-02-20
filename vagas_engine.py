@@ -16,67 +16,66 @@ def executar_varredura_vagas():
         mail.login(user, password)
         mail.select("inbox")
 
-        # Configurações de busca
         remetente_indeed = "donotreply@match.indeed.com"
         locais_alvo = ["Liberdade", "São Paulo", "SP", "Centro", "Paulista", "Bela Vista"]
         padrao_salario = r"R\$\s?[3-9]\.\d{3}"
         
         vagas_encontradas = []
 
-        # Busca apenas no Indeed por enquanto
         status, mensagens = mail.search(None, f'(FROM "{remetente_indeed}")')
         ids = mensagens[0].split()
 
         if not ids:
             return []
 
-        # Analisamos os e-mails mais recentes
-        for e_id in ids[-2:]:
-            _, data = mail.fetch(e_id, "(RFC822)")
-            msg = email.message_from_bytes(data[0][1])
-            
-            corpo_html = ""
-            if msg.is_multipart():
-                for part in msg.walk():
-                    if part.get_content_type() == "text/html":
-                        corpo_html = part.get_payload(decode=True).decode('utf-8', errors='ignore')
-            else:
-                corpo_html = msg.get_payload(decode=True).decode('utf-8', errors='ignore')
+        # Analisamos apenas o e-mail mais recente para evitar duplicatas pesadas
+        _, data = mail.fetch(ids[-1], "(RFC822)")
+        msg = email.message_from_bytes(data[0][1])
+        
+        corpo_html = ""
+        if msg.is_multipart():
+            for part in msg.walk():
+                if part.get_content_type() == "text/html":
+                    corpo_html = part.get_payload(decode=True).decode('utf-8', errors='ignore')
+        else:
+            corpo_html = msg.get_payload(decode=True).decode('utf-8', errors='ignore')
 
-            soup = BeautifulSoup(corpo_html, "html.parser")
+        soup = BeautifulSoup(corpo_html, "html.parser")
+        
+        # Estratégia: Buscar todos os links que contenham padrões de vaga do Indeed
+        for link in soup.find_all('a', href=True):
+            url = link['href']
             
-            # Varredura de links reais de vagas
-            for link in soup.find_all('a', href=True):
-                url = link['href']
+            # Verificamos se é um link de vaga (clk, pagead ou viewjob)
+            if "indeed.com" in url and ("clk" in url or "viewjob" in url or "pagead" in url):
+                container = link.find_parent()
+                texto_bloco = container.get_text(separator=' ') if container else ""
                 
-                # O Indeed usa 'clk' ou 'viewjob' para os links de candidatura
-                if "clk" in url or "viewjob" in url:
-                    container = link.find_parent()
-                    texto_bloco = container.get_text(separator=' ') if container else ""
-                    
-                    # Filtro Geográfico e Salarial
-                    match_local = any(l.lower() in texto_bloco.lower() for l in locais_alvo)
-                    match_salario = re.search(padrao_salario, texto_bloco)
+                # Filtros de Meta
+                match_local = any(l.lower() in texto_bloco.lower() for l in locais_alvo)
+                match_salario = re.search(padrao_salario, texto_bloco)
 
-                    if match_local and match_salario:
-                        # Extração do Título (Texto dentro do link ou do container)
-                        titulo = link.get_text().strip() or container.find().get_text().strip()
-                        salario = match_salario.group()
-                        
-                        # Montagem da mensagem limpa
-                        vaga_msg = (
-                            f"📋 *Cargo:* {titulo[:50]}\n"
-                            f"💰 *Salário:* {salario}\n"
-                            f"📍 *Local:* São Paulo (Região Central)\n"
-                            f"🏢 *Plataforma:* Indeed\n"
-                            f"🔗 *Link:* {url.split('?')[0]}"
-                        )
-                        
-                        if vaga_msg not in vagas_encontradas:
-                            vagas_encontradas.append(vaga_msg)
+                if match_local and match_salario:
+                    # Melhoria na captura do Título: pega o texto do link ou do elemento forte mais próximo
+                    titulo = link.get_text().strip()
+                    if not titulo or len(titulo) < 3:
+                        titulo = container.find(['b', 'strong', 'span']).get_text().strip() if container else "Vaga Detectada"
+                    
+                    salario = match_salario.group()
+                    
+                    # IMPORTANTE: Não cortamos a URL aqui para não quebrar o redirecionamento do Indeed
+                    vaga_msg = (
+                        f"📋 *Cargo:* {titulo[:60]}\n"
+                        f"💰 *Salário:* {salario}\n"
+                        f"📍 *Local:* SP (Região FMU/Centro)\n"
+                        f"🔗 *Link:* {url}"
+                    )
+                    
+                    if vaga_msg not in vagas_encontradas:
+                        vagas_encontradas.append(vaga_msg)
 
         mail.logout()
-        return vagas_encontradas[:5] # Retorna apenas dados REAIS encontrados
+        return vagas_encontradas[:5]
 
     except Exception as e:
         return [f"Erro na varredura: {str(e)}"]

@@ -112,7 +112,7 @@ scheduler.add_job(tarefa_diaria_vagas, 'date')
 scheduler.start()
 
 if __name__ == "__main__":
-    # O Render define a porta automaticamente
+    # O Render precisa que o host seja 0.0.0.0 e a porta venha da variável de ambiente
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
 

@@ -3,7 +3,18 @@ import imaplib
 import email
 from bs4 import BeautifulSoup
 import re
+import pyshorteners
 
+def encurtar_url(url_longa):
+    """Transforma o link gigante do Indeed em um link curto e funcional."""
+    try:
+        s = pyshorteners.Shortener()
+        # Usamos o TinyURL por ser estável e gratuito
+        return s.tinyurl.short(url_longa)
+    except Exception as e:
+        print(f"⚠️ Erro ao encurtar URL: {e}")
+        return url_longa # Se falhar, retorna a original para não perder a vaga
+        
 def executar_varredura_vagas():
     user = os.getenv("EMAIL_USER")
     password = os.getenv("EMAIL_PASS")
@@ -68,11 +79,12 @@ def executar_varredura_vagas():
 
                         if eh_capital and not eh_interior:
                             titulo = link.get_text().strip() or "Vaga Detectada"
+                            link_curto = encurtar_url(url.strip())
                             vaga_msg = (
                                 f"📋 *Cargo:* {titulo[:60]}\n"
                                 f"💰 *Salário:* {match_salario.group()}\n"
                                 f"📍 *Local:* {local_bruto}\n"
-                                f"🔗 *Link:* {url}"
+                                f"🔗 *Link:* {link_curto}"
                             )
                             vagas_encontradas.append(vaga_msg)
                             #if vaga_msg not in vagas_encontradas:
@@ -85,4 +97,5 @@ def executar_varredura_vagas():
     except Exception as e:
         print(f"❌ DEBUG ERRO: {str(e)}")
         return [f"Erro na varredura: {str(e)}"]
+
 

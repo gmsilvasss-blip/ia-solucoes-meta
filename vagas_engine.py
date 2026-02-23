@@ -74,12 +74,15 @@ def executar_varredura_vagas():
                                 f"📍 *Local:* {local_bruto}\n"
                                 f"🔗 *Link:* {url}"
                             )
-                            if vaga_msg not in vagas_encontradas:
-                                vagas_encontradas.append(vaga_msg)
+                            vagas_encontradas.append(vaga_msg)
+                            #if vaga_msg not in vagas_encontradas:
+                             #   vagas_encontradas.append(vaga_msg)
 
         mail.logout()
+       
         return vagas_encontradas[:8]
 
     except Exception as e:
         print(f"❌ DEBUG ERRO: {str(e)}")
         return [f"Erro na varredura: {str(e)}"]
+

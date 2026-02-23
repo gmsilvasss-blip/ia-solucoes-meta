@@ -80,7 +80,7 @@ def executar_varredura_vagas():
                             f"🔗 *Link:* {url.strip().replace('\\n', '')}"
                         )
 
-                        if vaga_msg not in vagas_encontradas:
+                       # if vaga_msg not in vagas_encontradas:
                             vagas_encontradas.append(vaga_msg)
                             # Salva para o resumo de softskills/certificações
                             salvar_no_historico(titulo, texto_bloco)
@@ -90,3 +90,4 @@ def executar_varredura_vagas():
 
     except Exception as e:
         return [f"Erro na varredura: {str(e)}"]
+

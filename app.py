@@ -1,118 +1,75 @@
 import os
-import logging
-import requests
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request
 from apscheduler.schedulers.background import BackgroundScheduler
-from vagas_engine import executar_varredura_vagas  # Importa sua engine de busca
-from dotenv import load_dotenv
+from apscheduler.triggers.cron import CronTrigger
+from vagas_engine import executar_varredura_vagas
 
-# Carrega variáveis de ambiente (local do .env, no Render do painel)
-load_dotenv()
+app = Flask(__name__)
 
-# Configuração de Logs para acompanhamento no Render
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
-app = Flask(__name__, template_folder='.')
-
-# --- VARIÁVEIS DE AMBIENTE (Padrão Guilherme) ---
-APP_ID = os.environ.get('App_Id')
-WA_TOKEN = os.environ.get('WHATSAPP_TOKEN')
-PHONE_ID = os.environ.get('PHONE_NUMBER_ID')
-VERIFY_TOKEN = os.environ.get('Verify_Token_Webhook', 'webhookkey')
-
-# Novas variáveis para a automação e IA
-MEU_NUMERO = os.environ.get('Meu_Numero_Whatsapp')
-AI_API_KEY = os.environ.get('Openai_Key')
-
-@app.route('/')
-def home():
-    """Página inicial do projeto"""
-    return render_template('index.html', app_id=APP_ID)
-
-@app.route('/webhook', methods=['GET', 'POST'])
-def webhook():
-    # Validação do Webhook (GET)
-    if request.method == 'GET':
-        mode = request.args.get('hub.mode')
-        token = request.args.get('hub.verify_token')
-        challenge = request.args.get('hub.challenge')
-        if mode == 'subscribe' and token == VERIFY_TOKEN:
-            return challenge, 200
-        return 'Forbidden', 403
-
-    # Recebimento de Mensagens (POST)
-    if request.method == 'POST':
-        data = request.json
-        if is_valid_message(data):
-            msg_body = data['entry'][0]['changes'][0]['value']['messages'][0]['text']['body']
-            from_number = data['entry'][0]['changes'][0]['value']['messages'][0]['from']
-            
-            # Chama o Oráculo (Lógica de RAG mantida)
-            resposta_ia = processar_oraculo(msg_body)
-            
-            # Envia a resposta da IA (Removido o eco simples)
-            enviar_mensagem_whatsapp(from_number, resposta_ia)
-
-        return jsonify({"status": "ok"}), 200
-
-def is_valid_message(data):
+def gerar_resumo_estrategico():
+    """Analisa o gap entre o histórico de vagas e o seu currículo."""
     try:
-        return 'messages' in data['entry'][0]['changes'][0]['value']
-    except:
-        return False
+        if not os.path.exists("historico_vagas.txt") or not os.path.exists("curriculo.txt"):
+            return "⚠️ Ainda não tenho dados suficientes (historico ou curriculo) para o resumo."
 
-def processar_oraculo(pergunta):
-    """Lógica do Oráculo com IA"""
-    logger.info(f"Processando pergunta: {pergunta}")
-    # Aqui você mantém sua implementação de busca no banco vetorial/RAG
-    return f"O Oráculo recebeu sua dúvida: {pergunta}. (Processando via RAG...)"
+        with open("historico_vagas.txt", "r", encoding="utf-8") as f:
+            vagas = f.read().lower()
+        with open("curriculo.txt", "r", encoding="utf-8") as f:
+            cv = f.read().lower()
 
-def enviar_mensagem_whatsapp(to, text):
-    """Envia mensagens via API da Meta"""
-    url = f"https://graph.facebook.com/v18.0/{PHONE_ID}/messages"
-    headers = {
-        "Authorization": f"Bearer {WA_TOKEN}",
-        "Content-Type": "application/json"
-    }
-    payload = {
-        "messaging_product": "whatsapp",
-        "to": to,
-        "type": "text",
-        "text": {"body": text}
-    }
-    try:
-        response = requests.post(url, json=payload, headers=headers)
-        logger.info(f"Status do envio para {to}: {response.status_code}")
-        return response.json()
+        # Lista de Skills relevantes para Ciência de Dados
+        mapa_skills = {
+            "PYTHON": "📜 Dica: Fortalecer lógica em Python ou bibliotecas Pandas/Numpy.",
+            "SQL": "📊 Dica: Praticar queries complexas e JOINS.",
+            "POWER BI": "📉 Dica: Criar um projeto de Dashboard para o portfólio.",
+            "INGLÊS": "🌍 Dica: Focar em vocabulário técnico para reuniões.",
+            "SPARK": "⚡ Dica: Estudar processamento distribuído (PySpark).",
+            "MACHINE LEARNING": "🤖 Dica: Estudar modelos de regressão e classificação."
+        }
+        
+        recomendacoes = []
+        for skill, dica in mapa_skills.items():
+            # Se a skill aparece nas vagas mas NÃO no seu currículo
+            if skill.lower() in vagas and skill.lower() not in cv:
+                recomendacoes.append(dica)
+
+        if not recomendacoes:
+            return "⭐ *Resumo:* Seu currículo está bem alinhado com as vagas recentes!"
+        
+        resumo = "📈 *Análise de Gap de Carreira*\nBaseado nas últimas vagas, foque em:\n\n" + "\n".join(recomendacoes)
+        return resumo
     except Exception as e:
-        logger.error(f"Erro ao enviar WhatsApp: {e}")
+        return f"Erro ao gerar resumo: {str(e)}"
 
-# --- AUTOMAÇÃO DE VAGAS ---
-
-def tarefa_diaria_vagas():
-    """Executa a varredura no e-mail e envia o relatório se encontrar vagas"""
-    logger.info("Iniciando varredura programada de vagas...")
+def job_vagas_manha():
+    """Disparo automático às 08:00 AM."""
     vagas = executar_varredura_vagas()
-    
-    if vagas:
-        # Envia um cabeçalho primeiro
-        enviar_mensagem_whatsapp(MEU_NUMERO, "💼 *Relatório de Vagas Selecionadas (Indeed)*")
-        # Envia cada vaga individualmente para não estourar o limite de caracteres
-        for vaga in vagas:
-            enviar_mensagem_whatsapp(MEU_NUMERO, vaga)
-    else:
-        logger.info("Nenhuma vaga acima de R$ 3.000 encontrada hoje.")
+    # Aqui entra sua função de envio: for v in vagas: enviar_wpp(v)
 
-# Agendador (Roda em paralelo ao Flask)
-scheduler = BackgroundScheduler()
-# Configurado para 12:00 UTC (Aproximadamente 09:00 Horário de Brasília/Jundiaí)
-#scheduler.add_job(tarefa_diaria_vagas, 'cron', hour=12, minute=0)
-scheduler.add_job(tarefa_diaria_vagas, 'date')
+# Configura o agendador para o fuso de São Paulo
+scheduler = BackgroundScheduler(timezone="America/Sao_Paulo")
+scheduler.add_job(job_vagas_manha, CronTrigger(hour=8, minute=0))
 scheduler.start()
 
+@app.route("/webhook", methods=['POST'])
+def webhook():
+    data = request.get_json()
+    try:
+        msg = data['entry'][0]['changes'][0]['value']['messages'][0]['text']['body'].lower()
+        
+        if "resumo" in msg:
+            feedback = gerar_resumo_estrategico()
+            # enviar_wpp(feedback)
+            return "OK", 200
+            
+        if any(cmd in msg for cmd in ["vaga", "oi", "vagas"]):
+            vagas = executar_varredura_vagas()
+            # for v in vagas: enviar_wpp(v)
+            return "OK", 200
+    except:
+        pass
+    return "OK", 200
+
 if __name__ == "__main__":
-    # O Render precisa que o host seja 0.0.0.0 e a porta venha da variável de ambiente
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
-

@@ -7,9 +7,7 @@ import re
 def salvar_no_historico(titulo, texto_bloco):
     """Armazena os detalhes da vaga para análise de requisitos futura."""
     try:
-        # O modo 'a' (append) adiciona ao final do arquivo sem apagar o anterior
         with open("historico_vagas.txt", "a", encoding="utf-8") as f:
-            # Limpamos quebras de linha para manter o log organizado
             conteudo_limpo = texto_bloco.replace("\n", " ").strip()
             f.write(f"VAGA: {titulo} | CONTEUDO: {conteudo_limpo[:600]}\n")
     except Exception as e:
@@ -80,14 +78,13 @@ def executar_varredura_vagas():
                             f"🔗 *Link:* {url.strip().replace('\\n', '')}"
                         )
 
-                       # if vaga_msg not in vagas_encontradas:
-                            vagas_encontradas.append(vaga_msg)
-                            # Salva para o resumo de softskills/certificações
-                            salvar_no_historico(titulo, texto_bloco)
+                        # Trava comentada para teste, mas com o alinhamento corrigido
+                        # if vaga_msg not in vagas_encontradas:
+                        vagas_encontradas.append(vaga_msg)
+                        salvar_no_historico(titulo, texto_bloco)
 
         mail.logout()
         return vagas_encontradas[:8]
 
     except Exception as e:
         return [f"Erro na varredura: {str(e)}"]
-

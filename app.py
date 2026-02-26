@@ -87,7 +87,7 @@ def webhook():
     # Recebimento de Mensagens
     data = request.get_json()
     try:
-        if 'messages' in data['entry'][0]['changes'][0]['value']:\
+        if 'messages' in data['entry'][0]['changes'][0]['value']:
             msg_obj = data['entry'][0]['changes'][0]['value']['messages'][0]
             texto_usuario = msg_obj.get('text', {}).get('body', "").lower()
 
@@ -108,3 +108,4 @@ def webhook():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
+

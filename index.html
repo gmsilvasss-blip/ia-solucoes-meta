@@ -81,7 +81,7 @@
     <script>
       window.fbAsyncInit = function() {
         FB.init({
-          appId      : '{{ app_id }}', // Usa o ID que vem do seu app.py
+          appId      : '{{ app_id }}', 
           cookie     : true,
           xfbml      : true,
           version    : 'v18.0'
@@ -99,10 +99,10 @@
       function launchWhatsAppSignup() {
         FB.login(function(response) {
           if (response.authResponse) {
-            console.log('Bem-vindo! Buscando as suas informações...');
-            alert('Conexão realizada com sucesso! Agora pode prosseguir com a análise.');
+            console.log('Conexão realizada com sucesso!');
+            alert('Conexão realizada com sucesso!');
           } else {
-            console.log('O utilizador cancelou o login ou não autorizou.');
+            console.log('O usuário cancelou o login ou não autorizou.');
           }
         }, {
           scope: 'whatsapp_business_management,whatsapp_business_messaging',
@@ -113,4 +113,3 @@
 
 </body>
 </html>
-

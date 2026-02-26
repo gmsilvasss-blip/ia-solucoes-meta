@@ -1,14 +1,33 @@
 import os
 import requests
 import json
-from flask import Flask, request
+from flask import Flask, request, render_template
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from vagas_engine import executar_varredura_vagas
 
-app = Flask(__name__)
+# Configurado para ler HTML da raiz do projeto
+app = Flask(__name__, template_folder='.')
 
-# --- FUNÇÃO DE ENVIO REAL (USANDO TUAS VARIÁVEIS DO RENDER) ---
+# --- ROTAS DE FACHADA E CONFORMIDADE (META) ---
+
+@app.route("/", methods=['GET'])
+def home():
+    # Carrega a página inicial oficial do Oráculo para o revisor da Meta
+    app_id = os.getenv("App_Id")
+    return render_template('index.html', app_id=app_id)
+
+@app.route("/privacidade", methods=['GET'])
+def privacidade():
+    # Rota exigida pela Meta para os Termos de Privacidade
+    return render_template('politica_privacidade.html')
+
+@app.route("/exclusao", methods=['GET'])
+def exclusao():
+    # Rota exigida pela Meta para instruções de exclusão de dados
+    return render_template('exclusao.html')
+
+# --- FUNÇÃO DE ENVIO REAL ---
 def enviar_mensagem_whatsapp(mensagem):
     token = os.getenv("WHATSAPP_TOKEN")
     phone_number_id = os.getenv("PHONE_NUMBER_ID")
@@ -36,54 +55,26 @@ def enviar_mensagem_whatsapp(mensagem):
         print(f"ERRO:app:Falha ao enviar mensagem: {str(e)}")
         return 500
 
-# --- LÓGICA DE RESUMO ESTRATÉGICO ---
 def gerar_resumo_estrategico():
-    try:
-        if not os.path.exists("historico_vagas.txt") or not os.path.exists("curriculo.txt"):
-            return "⚠️ Ainda não tenho dados históricos ou o teu arquivo 'curriculo.txt' para gerar o resumo."
+    return "💡 Resumo: O sistema está monitorando novas vagas no seu e-mail 24/7."
 
-        with open("historico_vagas.txt", "r", encoding="utf-8") as f:
-            vagas = f.read().lower()
-        with open("curriculo.txt", "r", encoding="utf-8") as f:
-            cv = f.read().lower()
+# --- AGENDADOR (RODANDO EM SEGUNDO PLANO) ---
+scheduler = BackgroundScheduler()
 
-        mapa_skills = {
-            "python": "📜 Dica: Fortalecer lógica em Python ou bibliotecas Pandas/Numpy.",
-            "sql": "📊 Dica: Praticar queries complexas e JOINS.",
-            "power bi": "📉 Dica: Criar um projeto de Dashboard para o portfólio.",
-            "inglês": "🌍 Dica: Focar em vocabulário técnico para reuniões.",
-            "pyspark": "⚡ Dica: Estudar processamento distribuído (PySpark).",
-            "machine learning": "🤖 Dica: Estudar modelos de regressão e classificação."
-        }
-        
-        recomendacoes = []
-        for skill, dica in mapa_skills.items():
-            if skill in vagas and skill not in cv:
-                recomendacoes.append(dica)
-
-        if not recomendacoes:
-            return "⭐ *Resumo:* O teu currículo está muito bem alinhado com as vagas recentes!"
-        
-        return "📈 *Análise de Gap de Carreira*\nCom base nas vagas analisadas, foca em:\n\n" + "\n".join(recomendacoes)
-    except Exception as e:
-        return f"Erro ao processar resumo: {str(e)}"
-
-# --- AGENDADOR (SCHEDULER) ---
-def job_vagas_manha():
-    print("🌅 Iniciando varredura matinal automática...")
+def job_vagas():
+    print("INFO:app:Iniciando varredura agendada...")
     vagas = executar_varredura_vagas()
     if vagas:
         for v in vagas:
             enviar_mensagem_whatsapp(v)
 
-scheduler = BackgroundScheduler(timezone="America/Sao_Paulo")
-scheduler.add_job(job_vagas_manha, CronTrigger(hour=8, minute=0))
+# Agendado para rodar a cada 30 minutos
+scheduler.add_job(job_vagas, CronTrigger(minute='0,30'))
 scheduler.start()
 
-# --- WEBHOOK (GATILHOS MANUAIS) ---
+# --- WEBHOOK (INTERFACE COM WHATSAPP) ---
 @app.route("/webhook", methods=['GET', 'POST'])
 def webhook():
-    # Verificação de Token da Meta (Configuração Inicial)
     if request.method == 'GET':
         verify_token = os.getenv("Verify_Token_Webhook")
         mode = request.args.get('hub.mode')
@@ -96,15 +87,13 @@ def webhook():
     # Recebimento de Mensagens
     data = request.get_json()
     try:
-        if 'messages' in data['entry'][0]['changes'][0]['value']:
+        if 'messages' in data['entry'][0]['changes'][0]['value']:\
             msg_obj = data['entry'][0]['changes'][0]['value']['messages'][0]
             texto_usuario = msg_obj.get('text', {}).get('body', "").lower()
 
-            # Gatilho: RESUMO
             if "resumo" in texto_usuario:
                 enviar_mensagem_whatsapp(gerar_resumo_estrategico())
             
-            # Gatilho: VARREDURA IMEDIATA
             elif any(cmd in texto_usuario for cmd in ["vaga", "vagas", "oi"]):
                 vagas = executar_varredura_vagas()
                 if not vagas:
@@ -116,10 +105,6 @@ def webhook():
         pass
     return "EVENT_RECEIVED", 200
 
-@app.route("/", methods=['GET'])
-def home():
-    return "Oráculo de Vagas Ativo", 200
-
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)

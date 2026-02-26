@@ -2,13 +2,12 @@ import os
 import requests
 import json
 from flask import Flask, request, render_template
-# Importação mantida para o projeto estar íntegro
+# Mantendo sua engine original
 from vagas_engine import executar_varredura_vagas 
 
-# Configurado para ler HTML da raiz do projeto (.)
 app = Flask(__name__, template_folder='.')
 
-# --- ROTAS DE FACHADA E CONFORMIDADE (META) ---
+# --- ROTAS DE CONFORMIDADE ---
 
 @app.route("/", methods=['GET'])
 def home():
@@ -23,7 +22,7 @@ def privacidade():
 def exclusao():
     return render_template('exclusao.html')
 
-# --- FUNÇÃO DE ENVIO DINÂMICA (Responde para quem mandou) ---
+# --- FUNÇÃO DE ENVIO ---
 def enviar_resposta_dinamica(destinatario, mensagem):
     token = os.getenv("WHATSAPP_TOKEN")
     phone_number_id = os.getenv("PHONE_NUMBER_ID")
@@ -49,16 +48,7 @@ def enviar_resposta_dinamica(destinatario, mensagem):
         print(f"ERRO:app:Falha ao enviar: {str(e)}")
         return 500
 
-# --- O ORQUESTRADOR (PAUSADO PARA O VÍDEO) ---
-# O código continua aqui, mas não iniciamos o scheduler agora para evitar spam no vídeo
-# def iniciar_agendador():
-#     from apscheduler.schedulers.background import BackgroundScheduler
-#     from apscheduler.triggers.cron import CronTrigger
-#     scheduler = BackgroundScheduler()
-#     scheduler.add_job(executar_varredura_vagas, CronTrigger(minute='0,30'))
-#     scheduler.start()
-
-# --- WEBHOOK (INTERFACE COM WHATSAPP) ---
+# --- WEBHOOK ---
 @app.route("/webhook", methods=['GET', 'POST'])
 def webhook():
     if request.method == 'GET':
@@ -72,6 +62,7 @@ def webhook():
         return 'Forbidden', 403
 
     data = request.get_json()
+    # Log crucial para conferir no Render se a mensagem chegou
     print(f"DEBUG: Dados recebidos da Meta: {json.dumps(data)}")
 
     try:
@@ -80,17 +71,17 @@ def webhook():
             remetente = msg_obj.get('from') 
             texto_usuario = msg_obj.get('text', {}).get('body', "").lower()
 
-            # Resposta para o Vídeo (Simulando o Template hello_world)
+            # Resposta alinhada ao template 'hello_world' para o vídeo
             if any(cmd in texto_usuario for cmd in ["vaga", "vagas", "oi", "ola", "olá"]):
                 template_text = "Welcome and congratulations! This message confirms that your integration with the WhatsApp Business Platform is working correctly."
                 enviar_resposta_dinamica(remetente, template_text)
             
             elif "resumo" in texto_usuario:
-                resumo = "💡 O Oráculo está monitorizando vagas (Modo de Demonstração)."
+                resumo = "💡 O Oráculo está em modo de demonstração técnica."
                 enviar_resposta_dinamica(remetente, resumo)
                 
     except Exception as e:
-        print(f"ERRO:app:Erro no webhook: {e}")
+        print(f"ERRO:app:Erro no processamento: {e}")
     
     return "EVENT_RECEIVED", 200
 

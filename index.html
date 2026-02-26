@@ -3,89 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IA Soluções - Oráculo</title>
+    <title>Oráculo - IA Soluções</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
+            justify-content: center;
             height: 100vh;
             margin: 0;
             background-color: #f0f2f5;
+            color: #1c1e21;
         }
         .container {
             text-align: center;
             background: white;
             padding: 40px;
             border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 90%;
         }
-        button {
+        h1 { margin-bottom: 10px; font-size: 24px; }
+        p { color: #606770; margin-bottom: 30px; }
+        
+        .fb-button {
             background-color: #1877f2;
             color: white;
             border: none;
             padding: 12px 24px;
-            font-size: 16px;
             border-radius: 6px;
-            cursor: pointer;
+            font-size: 16px;
             font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
         }
-        button:hover {
-            background-color: #166fe5;
+        .fb-button:hover { background-color: #166fe5; }
+
+        footer {
+            margin-top: 30px;
+            font-size: 13px;
+            color: #65676b;
+        }
+        footer a {
+            color: #0084ff;
+            text-decoration: none;
+        }
+        footer a:hover { text-decoration: underline; }
+        hr {
+            border: 0;
+            border-top: 1px solid #ddd;
+            margin: 20px auto;
+            width: 80%;
         }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>Conectar ao Oráculo</h1>
-        <p>Clique abaixo para integrar seu WhatsApp via Meta.</p>
-        <button onclick="launchWhatsAppSignup()">Conectar com Facebook</button>
+        <h1>Oráculo</h1>
+        <p>Conecte a sua conta para gerir notificações e suporte técnico via WhatsApp.</p>
+        
+        <button onclick="launchWhatsAppSignup()" class="fb-button">
+            Conectar com Facebook
+        </button>
+
+        <footer>
+            <hr>
+            <a href="/politica_privacidade">Política de Privacidade</a> 
+            <span style="margin: 0 8px;">|</span> 
+            <a href="/exclusao">Exclusão de Dados</a>
+            <p style="margin-top: 15px; font-size: 11px;">© 2026 IA Soluções</p>
+        </footer>
     </div>
 
-    <div id="fb-root"></div>
-    <script async defer crossorigin="anonymous" src="https://connect.facebook.net/pt_BR/sdk.js"></script>
-
     <script>
-        // Inicialização do SDK
-        window.fbAsyncInit = function() {
-            FB.init({
-                appId      : '{{ app_id }}',
-                cookie     : true,
-                xfbml      : true,
-                version    : 'v18.0'
-            });
-            console.log("SDK do Facebook inicializado com App ID: {{ app_id }}");
-        };
+      window.fbAsyncInit = function() {
+        FB.init({
+          appId      : '{{ app_id }}', // Usa o ID que vem do seu app.py
+          cookie     : true,
+          xfbml      : true,
+          version    : 'v18.0'
+        });
+      };
 
-        // Função de Login simplificada para evitar erros de sintaxe
-        function launchWhatsAppSignup() {
-            console.log("Iniciando fluxo de login...");
-            
-            FB.login(function(response) {
-                if (response.authResponse) {
-                    console.log('Autenticado com sucesso!', response);
-                    alert("Conexão realizada com sucesso! Você já pode gravar o vídeo.");
-                } else {
-                    console.log('O usuário cancelou o login.');
-                    alert("A conexão não foi concluída.");
-                }
-            }, {
-                // Escopos necessários para o WhatsApp sem exigir verificação empresarial imediata
-                scope: 'whatsapp_business_management,whatsapp_business_messaging',
-                return_scopes: true
-            });
-        }
+      (function(d, s, id){
+         var js, fjs = d.getElementsByTagName(s)[0];
+         if (d.getElementById(id)) {return;}
+         js = d.createElement(s); js.id = id;
+         js.src = "https://connect.facebook.net/pt_BR/sdk.js";
+         fjs.parentNode.insertBefore(js, fjs);
+       }(document, 'script', 'facebook-jssdk'));
+
+      function launchWhatsAppSignup() {
+        FB.login(function(response) {
+          if (response.authResponse) {
+            console.log('Bem-vindo! Buscando as suas informações...');
+            alert('Conexão realizada com sucesso! Agora pode prosseguir com a análise.');
+          } else {
+            console.log('O utilizador cancelou o login ou não autorizou.');
+          }
+        }, {
+          scope: 'whatsapp_business_management,whatsapp_business_messaging',
+          extras: {
+            feature: 'whatsapp_embedded_signup'
+          }
+        });
+      }
     </script>
-        <footer style="margin-top: 50px; text-align: center; font-family: sans-serif; color: #666;">
-        <hr style="width: 50%; border: 0; border-top: 1px solid #eee;">
-        <p>
-            <a href="/politica_privacidade" style="color: #0084ff; text-decoration: none; margin: 0 10px;">Política de Privacidade</a> | 
-            <a href="/exclusao" style="color: #0084ff; text-decoration: none; margin: 0 10px;">Exclusão de Dados</a>
-        </p>
-        <p style="font-size: 12px;">© 2026 Oráculo - IA Soluções</p>
-    </footer>
+
 </body>
 </html>
-
